@@ -1,10 +1,11 @@
 \documentclass[fontsize=11pt]{article}
 \usepackage{amsmath}
+\usepackage{graphicx}
 \usepackage[utf8]{inputenc}
 \usepackage[margin=0.75in]{geometry}
 
-\title{CSC110 Project Proposal: TODO FILL IN YOUR PROJECT TITLE HERE}
-\author{TODO: FILL IN ALL GROUP MEMBER NAMES HERE}
+\title{CSC110 Project Proposal: An Investigation of the Political Satisfaction of the General Public over the COVID-19 Pandemic}
+\author{Aviraj Newatia, Mishaal Kandapath, Rudraksh Monga, Taylor Whatley}
 \date{Friday, November 5, 2021}
 
 \begin{document}
@@ -16,7 +17,16 @@ TODO
 
 \section*{Dataset Description}
 
-TODO
+The dataset we will be using was sourced from the online machine learning data repository Kaggle, a subsidiary of Google LLC, which serves as an online community of data scientists and machine learning practitioners. 
+\\\\
+It is a csv (comma-separated values) file of 17,777,472 unique comments related to covid that were collated from the online forum platform Reddit. The dataset is called The Reddit COVID dataset [https://www.kaggle.com/pavellexyr/the-reddit-covid-dataset].
+\\\\
+We transformed this dataset by filtering by the subreddit the comment came from, building a sub-dataset of comments only from political subreddits such as r/uspolitics. 
+\\\\
+The dataset was too large to load into Excel, so we filtered the first 2 million comments using pandas in Python to yield 32,335 comments. 
+\\\\
+The dataset has 10 columns, of which we extracted and will be using 2 which are the actual text of the comment ("body") and the timestamp of creation/posting ("created\_utc"). \\\\
+\includegraphics{rows.png}
 
 \section*{Computational Plan}
 
