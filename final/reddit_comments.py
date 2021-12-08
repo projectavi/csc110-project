@@ -1,5 +1,6 @@
 import praw
 import pprint
+import datetime
 
 reddit = praw.Reddit(
     client_id="ZTrdortwe2H2cqKIfBVb7g",
@@ -13,14 +14,34 @@ print(reddit.user.me())
 
 def get_comments(subreddit: str, limit: int=None) -> list[dict[str]]:
     list_of_comments = []
-    for comment in reddit.subreddit(subreddit).comments(limit=limit):
-        list_of_comments.append({"id": comment.id, "body": comment.body, "author": comment.author, "timestamp": comment.created_utc, "link": comment.permalink})
+    for submission in reddit.subreddit(subreddit).new():
+        if len(list_of_comments) == limit:
+            return list_of_comments
+        else:
+            if submission.created_utc < 1577817000:
+                submission.comments.replace_more();
+                for comment in submission.comments.list():
+                    list_of_comments.append({"id": comment.id, "body": comment.body, "author": comment.author, "timestamp": comment.created_utc, "time": datetime.datetime.fromtimestamp(comment.created_utc), "link": comment.permalink})
+            else:
+                continue
     return list_of_comments
 
-sub = input("Subreddit: ")
+comments = []
 limit = int(input("Limit: "))
 if limit == 0:
     limit = None
+for subreddit in ["uspolitics", "ultimateuspolitics", "american_politics", "americanpolitics"]: #"usapolitics",
+    before = len(comments)
+    comments = comments + get_comments(subreddit, limit//4)
+    print(subreddit +": " + str(len(comments) - before))
+    
 
-comments = get_comments(sub, limit)
-pprint.pprint(len(comments))
+pprint.pprint((comments))
+
+# sub = input("Subreddit: ")
+# limit = int(input("Limit: "))
+# if limit == 0:
+#     limit = None
+
+# comments = get_comments(sub, limit)
+# pprint.pprint(len(comments))
