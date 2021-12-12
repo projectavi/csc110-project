@@ -59,7 +59,7 @@ class OpinionSimulation(PopulationSentimentSimulation):
         "Use mishaals sentiment computer"
         self.comment = comment
 
-        self.comment_sentiment = random.uniform(-50, 50)
+        self.comment_sentiment = random.uniform(-50, 50) #Comment this out and set self.comment_sentiment equal to the return of the sentiment from your analyser
 
     def generate_comment_responses_sentiment(self, sentiment: float):
 
