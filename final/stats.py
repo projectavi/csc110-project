@@ -269,14 +269,15 @@ def graph_raw(points: StatisticsNormalizeResult, title: Optional[str] = None) ->
 
     The graph title will be `title` if specified, otherwise it will be generated in method.
     """
+    analysis = statistics_analyze_raw(points)
+
     if title is None:
         title = f'Comment Sentiment Over Time'
 
-        if points.start_date is not None and points.end_date is not None:
-            title += f', From {str(points.start_date.date())}' \
-                     f'Through {str(points.end_date.date())}'
-
-    analysis = statistics_analyze_raw(points)
+    if points.start_date is not None and points.end_date is not None:
+        correlation = '[r = {:.3f}]'.format(analysis.correlation)
+        title += f', From {str(points.start_date.date())} ' \
+                 f'Through {str(points.end_date.date())} {correlation}'
 
     fit_x = []
     fit_y = []
@@ -307,7 +308,8 @@ def graph_raw(points: StatisticsNormalizeResult, title: Optional[str] = None) ->
 
 def graph(comments: list[StatisticsCommentInfo],
           start_time: datetime.datetime,
-          end_time: datetime.datetime) -> None:
+          end_time: datetime.datetime,
+          title: Optional[str] = None) -> None:
     """
     Convenience method for graph.
     Opens a new window with a graph graphing all comments in `comments`.
@@ -317,10 +319,10 @@ def graph(comments: list[StatisticsCommentInfo],
         - comments != []
     """
 
-    return graph_raw(statistics_normalize(comments, start_time, end_time))
+    return graph_raw(statistics_normalize(comments, start_time, end_time), title)
 
 
-def graph_all(comments: list[StatisticsCommentInfo]) -> None:
+def graph_all(comments: list[StatisticsCommentInfo], title: Optional[str] = None) -> None:
     """
     Convenience method for graph.
     Opens a new window with a graph graphing all comments in `comments`.
@@ -329,7 +331,7 @@ def graph_all(comments: list[StatisticsCommentInfo]) -> None:
         - comments != []
     """
 
-    return graph_raw(statistics_normalize_all(comments))
+    return graph_raw(statistics_normalize_all(comments), title)
 
 
 if __name__ == '__main__':
