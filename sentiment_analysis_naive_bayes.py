@@ -18,7 +18,7 @@ class SentimentAnalyzer:
         - vocabulary: set of all words that occur in training data
     """
     vocabulary: set[str]
-    priors: dict[str: tuple[float, float]]
+    priors: dict[str, tuple[float, float]]
     class_to_word_to_count: dict[str, dict[str, int]]
     sum_denom: dict[str, float]
 

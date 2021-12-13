@@ -1,6 +1,6 @@
 """
 Sentiment analysis on public opinion regarding governments is conducted.
-Further statistical analysis is conducted on scored sentiments from the model 
+Further statistical analysis is conducted on scored sentiments from the model
 and a stunning visual simulation based on sentiments is presented.
 Copyright Mishaal Kandapath, Taylor Whatley, Aviraj Newatia, and Rudraksh Monga.
 """
@@ -9,7 +9,7 @@ import pandas
 
 from stats import StatisticsCommentInfo, graph_raw, process_average_comments
 from sentiment_analysis_naive_bayes import SentimentAnalyzer
-from simulation import OpinionSimulation
+from simulation import OpinionSimulationManager
 
 
 def load_and_graph(analyzer: SentimentAnalyzer,
@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
     # Parameters
     analyzer_source_model = 'datasets/exports.json'
-    simulation_seed_comment = 'I really like fortnite.'
+    simulation_seed_comment = 'I really like python.'
 
     # Some of the CSV files include sentiment data 3 days before the sentiment model was pushed.
     # I'm just going to assume the sentiment data in the pandas model is faulty.
@@ -82,5 +82,7 @@ if __name__ == '__main__':
                    'Comment Sentiment Over Time (Post Covid US)',
                    ('created_utc', 'body'))
 
-    simulation = OpinionSimulation(100)
-    simulation.run_simulation(simulation_seed_comment, sentiment_analyzer)
+    simulation = OpinionSimulationManager()
+    simulation.add_sim_instance(100)
+    simulation.comments.append([simulation_seed_comment])
+    simulation.run_simulation(sentiment_analyzer)

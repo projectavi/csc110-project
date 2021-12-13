@@ -39,7 +39,7 @@ class PopulationSentimentSimulation:
         """
         raise NotImplementedError
 
-    def calc_impact(self, sentiment: float, index: int) -> list[float]:
+    def calc_impact(self, sentiment: float) -> list[float]:
         """
         Calculates the sentiment impact based on the sentiment value
         """
@@ -99,7 +99,7 @@ class OpinionSimulation(PopulationSentimentSimulation):
         """
         Simulate the impact of the comment sentiment on the sentiment of the public
         """
-        sentiment_impact = [self.calc_impact(sentiment, 0)]
+        sentiment_impact = [self.calc_impact(sentiment)]
         already_impacted = []
         not_impacted = list(range(self.population))
 
@@ -109,7 +109,7 @@ class OpinionSimulation(PopulationSentimentSimulation):
             if not_impacted == []:
                 already_impacted = []
                 not_impacted = list(range(self.population))
-            for _ in range(((self.population * 2) // 5) - j):
+            for _ in range(((self.population * 2) // 5)):
                 if not_impacted == []:
                     already_impacted = []
                     not_impacted = list(range(self.population))
@@ -117,33 +117,33 @@ class OpinionSimulation(PopulationSentimentSimulation):
                 impacted.append(temp)
                 not_impacted.remove(temp)
                 already_impacted.append(temp)
-            if sum([abs(x) for x in sentiment_impact[j]]) <= 0.04 or j >= self.population * 3:
+            if (sum([abs(x) for x in sentiment_impact[j]]) <= 0.04) or (j >= self.population * 3):
                 if j <= self.population:
                     sentiment_impact[j] = self.generate_sentiment_impact()
                 else:
                     self.j_max += j
                     return
-            for i in range(((self.population * 2) // 5) - j):
+            for i in range(((self.population * 2) // 5)):
                 self.population_sentiment[impacted[i]] += sentiment_impact[j][i]
-                sentiment_impact.append(self.calc_impact(self.population_sentiment[impacted[i]], j))
+                sentiment_impact.append(self.calc_impact(self.population_sentiment[impacted[i]]))
 
             self.past_values += self.population_sentiment
             sentiment_impact.remove(sentiment_impact[j])
 
-    def calc_impact(self, sentiment: float, index: int) -> list[float]:
+    def calc_impact(self, sentiment: float) -> list[float]:
         """
         Calculates the sentiment impact based on the sentiment value
         """
         sentiment_impact = []
         if sentiment == 0:
             sentiment_impact = [random.uniform(-abs(sentiment / 2), abs(sentiment / 2))
-                                for _ in range(((self.population * 2) // 5) - index)]
+                                for _ in range(((self.population * 2) // 5))]
         elif sentiment < 0:
             sentiment_impact = [random.uniform(-abs(sentiment / 2), abs(sentiment / 4))
-                                for _ in range(((self.population * 2) // 5) - index)]
+                                for _ in range(((self.population * 2) // 5))]
         elif sentiment > 0:
             sentiment_impact = [random.uniform(-abs(sentiment / 4), abs(sentiment / 2))
-                                for _ in range(((self.population * 2) // 5) - index)]
+                                for _ in range(((self.population * 2) // 5))]
         return sentiment_impact
 
     def generate_sentiment_impact(self) -> list[float]:
@@ -155,7 +155,7 @@ class OpinionSimulation(PopulationSentimentSimulation):
                                 abs(max([abs(x)
                                          for x in [max(self.past_values),
                                                    min(self.past_values)]]) / 2)) for _ in
-                 range((self.population * 2) // 5)])
+                 range(((self.population * 2) // 5))])
 
     def run_simulation(self, comment_raised: str, analyzer: SentimentAnalyzer) -> None:
         """
@@ -208,7 +208,7 @@ class SimulationManager:
         """
         raise NotImplementedError
 
-    def run_simulation(self) -> None:
+    def run_simulation(self, analyzer: SentimentAnalyzer) -> None:
         """
         Manages and runs the simulations on all the instances for all their comments in the order
         they were entered
@@ -258,7 +258,7 @@ class OpinionSimulationManager(SimulationManager):
                     temp_list.append(string_in)
             self.comments.append(temp_list)
 
-    def run_simulation(self) -> None:
+    def run_simulation(self, analyzer: SentimentAnalyzer) -> None:
         """
         Manages and runs the simulations on all the instances for all their comments in the order
         they were entered
@@ -267,7 +267,7 @@ class OpinionSimulationManager(SimulationManager):
             print(i)
             for j in range(0, len(self.comments[i])):
                 print(j)
-                self.instances[i].run_simulation(self.comments[i][j])
+                self.instances[i].run_simulation(self.comments[i][j], analyzer)
             self.results.append(self.instances[i].population_sentiment)
 
 
