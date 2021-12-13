@@ -163,11 +163,6 @@ def statistics_normalize(comments: list[StatisticsCommentInfo]) -> StatisticsNor
         x = start_seconds / magnitude
         y = comment.sentiment
 
-        # if min_x is None or x < min_x:
-        #     min_x = x
-        # if max_x is None or x > max_x:
-        #     max_x = x
-
         if min_y is None or y < min_y:
             min_y = y
         if max_y is None or y > max_y:
@@ -176,8 +171,6 @@ def statistics_normalize(comments: list[StatisticsCommentInfo]) -> StatisticsNor
         points.append(StatisticsPoint(x=x, y=y))
 
     return StatisticsNormalizeResult(
-        # min_x=min_x,
-        # max_x=max_x,
         min_y=min_y,
         max_y=max_y,
 
@@ -221,7 +214,6 @@ def statistics_analyze_raw(normalized_data: StatisticsNormalizeResult) -> Statis
 
     mean_y = statistics.mean(y_values)
     median_y = statistics.median(y_values)
-    # mode_y = statistics.mode(y_values)
 
     data_frame = pandas.DataFrame(data=normalized_data.points)
     correlation = data_frame.corr().loc['x']['y']
@@ -236,7 +228,6 @@ def statistics_analyze_raw(normalized_data: StatisticsNormalizeResult) -> Statis
 
         mean_y=mean_y,
         median_y=median_y,
-        # mode_y=mode_y,
 
         fit=(float(fit[0]), float(fit[1]), float(fit[2])),
         correlation=correlation
@@ -393,7 +384,6 @@ def process_average_comments(comments: list[StatisticsCommentInfo]) -> Statistic
 
     days_count = (end - start).days + 1
 
-    # array [total_sentiment, total_days]
     days = []
 
     # Can't do [[0, 0]] * days_count, would share reference of arrays...
