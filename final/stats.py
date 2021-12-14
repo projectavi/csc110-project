@@ -292,7 +292,7 @@ def graph_raw(points: StatisticsNormalizeResult, title: Optional[str] = None) ->
         fit_x.append(x)
         fit_y.append(y)
 
-    figure = plotly.express.scatter(
+    figure = plotly.express.line(
         title=title,
         x=[point.x for point in points.points],
         y=[point.y for point in points.points]
@@ -333,6 +333,47 @@ def graph_all(comments: list[StatisticsCommentInfo], title: Optional[str] = None
 
     return graph_raw(statistics_normalize_all(comments), title)
 
+
+def process_average_comments(comments: list[StatisticsCommentInfo]) -> list[StatisticsCommentInfo]:
+    """
+    AA
+    """
+
+    normalized = statistics_normalize_all(comments)
+
+    assert normalized.start_date is not None
+    assert normalized.end_date is not None
+
+    start = normalized.start_date
+    end = normalized.end_date
+
+    days_count = (end - start).days + 1
+
+    # array [total_sentiment, total_days]
+    days = []
+
+    # Can't do [[0, 0]] * days_count, would share reference of arrays...
+    for _ in range(days_count):
+        days.append([0, 0])
+
+    for comment in comments:
+        day = (comment.date - start).days
+
+        days[day][0] += comment.sentiment
+        days[day][1] += 1
+
+    result = []
+
+    for i in range(days_count):
+        day = start + datetime.timedelta(days=i)
+        sentiment = 0
+
+        if days[i][1] != 0:
+            sentiment = days[i][0] / days[i][1]
+
+        result.append(StatisticsCommentInfo(date=day, sentiment=sentiment))
+
+    return result
 
 if __name__ == '__main__':
     data = [
