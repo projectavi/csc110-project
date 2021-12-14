@@ -1,5 +1,5 @@
 """
-Running a Naive Bayes Sentiment Analysis model.
+Training and running a Naive Bayes Sentiment Analysis model on the Sentiment140 Dataset.
 Copyright Mishaal Kandapath, Taylor Whatley, Aviraj Newatia, and Rudraksh Monga.
 """
 
