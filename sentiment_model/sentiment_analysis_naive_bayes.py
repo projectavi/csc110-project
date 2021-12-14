@@ -127,9 +127,8 @@ def count_words_in_sentence(sentences: list[str]) -> dict[str, int]:
         - sentiment_class is a valid sentiment class
         - strings in sentences are stripped off whitespaces
 
-    >>> x = SentimentAnalyzer()
     >>> expected = {'I': 2, 'love': 1, 'this': 2, 'movie': 2, 'hate': 1}
-    >>> x.count_words_in_sentence(["I love this movie", "I hate this movie"]) == expected
+    >>> count_words_in_sentence(["I love this movie", "I hate this movie"]) == expected
     True
     """
     word_counts = {}

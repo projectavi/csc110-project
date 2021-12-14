@@ -8,7 +8,7 @@ import plotly
 import plotly.express as px
 import pandas as pd
 import numpy as np
-
+from sentiment_model.sentiment_analysis_naive_bayes import SentimentAnalyzer
 
 class PopulationSentimentSimulation:
     """
@@ -88,10 +88,9 @@ class OpinionSimulation(PopulationSentimentSimulation):
         Utilises the Logistic Regression model to compute the sentiment of the comment
         """
         self.comment = comment
-
-        self.comment_sentiment = random.uniform(-50, 50)
-        # Comment this out and set self.comment_sentiment equal
-        # to the return of the sentiment from your analyser
+        sentiment_analyzer = SentimentAnalyzer(pretrained=True)
+        probability_positive = sentiment_analyzer.classify(self.comment)[2]["0"][0] - 0.5
+        self.comment_sentiment = probability_positive * 100
 
     def generate_responses_sentiment(self, sentiment: float) -> None:
         """
