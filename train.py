@@ -77,7 +77,7 @@ if __name__ == '__main__':
     print("initializing...")
     sentiment_analyzer = SentimentAnalyzer()
     print("loading training data...")
-    train_data = obtain_training_data('training.csv')
+    train_data = obtain_training_data('datasets/training.csv')
     train_data, test = split_training_test(train_data)
     print("finished loading training data.")
     print("training model...")

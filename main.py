@@ -81,4 +81,4 @@ if __name__ == '__main__':
                    ('created_utc', 'body'))
 
     simulation = OpinionSimulation(100)
-    simulation.run_simulation(simulation_seed_comment)
+    simulation.run_simulation(simulation_seed_comment, sentiment_analyzer)

@@ -8,18 +8,17 @@ import plotly
 import plotly.express as px
 import pandas as pd
 import numpy as np
+from sentiment_analysis_naive_bayes import SentimentAnalyzer
 
 
 class PopulationSentimentSimulation:
     """
     This abstract class represents a single simulation instance for a population
-
     Instance Attributes:
         - comment: The comment who's effect will be simulated
         - comment_sentiment: The sentiment of the comment
         - population: The size of the population to be simulated
         - population_sentiment: The sentiments of each person in the population
-
     Representation Invariants:
         - self.population > 0
     """
@@ -28,9 +27,9 @@ class PopulationSentimentSimulation:
     population: int
     population_sentiment: list[float]
 
-    def compute_comment_sentiment(self, comment: str) -> None:
+    def compute_comment_sentiment(self, comment: str, analyzer: SentimentAnalyzer) -> None:
         """
-        Utilises the Logistic Regression model to compute the sentiment of the comment
+        Utilises the Sentiment Analysis model to compute the sentiment of the comment
         """
         raise NotImplementedError
 
@@ -40,13 +39,19 @@ class PopulationSentimentSimulation:
         """
         raise NotImplementedError
 
+    def calc_impact(self, sentiment: float, index: int) -> list[float]:
+        """
+        Calculates the sentiment impact based on the sentiment value
+        """
+        raise NotImplementedError
+
     def generate_sentiment_impact(self) -> list[float]:
         """
         Generate the sentiment impact using the past sentiment values
         """
         raise NotImplementedError
 
-    def run_simulation(self, comment_raised: str) -> None:
+    def run_simulation(self, comment_raised: str, analyzer: SentimentAnalyzer) -> None:
         """
         Manage the simulation and run it on the comment raised and generate the visualisation
         """
@@ -57,13 +62,11 @@ class OpinionSimulation(PopulationSentimentSimulation):
     """
     This class represents a single simulation instance for a population for Opinion spread
     simulation
-
     Instance Attributes:
         - comment: The comment who's effect will be simulated
         - comment_sentiment: The sentiment of the comment
         - population: The size of the population to be simulated
         - population_sentiment: The sentiments of each person in the population
-
     Representation Invariants:
         - self.population > 0
         - self.j_max > 0
@@ -77,40 +80,36 @@ class OpinionSimulation(PopulationSentimentSimulation):
 
     def __init__(self, population: int) -> None:
         self.population = population
-        self.population_sentiment = [0.0 for person in range(population)]
+        self.population_sentiment = [0.0 for _ in range(population)]
         self.comment = ""
         self.comment_sentiment = 0
         self.past_values = list(self.population_sentiment)
         self.j_max = 0
 
-    def compute_comment_sentiment(self, comment: str) -> None:
+    def compute_comment_sentiment(self, comment: str, analyzer: SentimentAnalyzer) -> None:
         """
-        Utilises the Logistic Regression model to compute the sentiment of the comment
+        Utilises the Sentiment Analysis model to compute the sentiment of the comment
         """
         self.comment = comment
-
-        self.comment_sentiment = random.uniform(-50, 50)
-        # Comment this out and set self.comment_sentiment equal
-        # to the return of the sentiment from your analyser
+        probability_positive = analyzer.classify(self.comment)[2]["0"][0] - 0.5
+        self.comment_sentiment = probability_positive * -100
+        print(self.comment_sentiment)
 
     def generate_responses_sentiment(self, sentiment: float) -> None:
         """
         Simulate the impact of the comment sentiment on the sentiment of the public
         """
-        # print(sentiment)
-        sentiment_impact = [[random.uniform(-abs(sentiment / 2), abs(sentiment / 2)) for a in range(
-            (self.population * 2) // 5)]]
+        sentiment_impact = [self.calc_impact(sentiment, 0)]
         already_impacted = []
         not_impacted = list(range(self.population))
 
         for sentiments in sentiment_impact:
             j = sentiment_impact.index(sentiments)
-            # print(j)
             impacted = []
             if not_impacted == []:
                 already_impacted = []
                 not_impacted = list(range(self.population))
-            for i in range((self.population * 2) // 5):
+            for _ in range(((self.population * 2) // 5) - j):
                 if not_impacted == []:
                     already_impacted = []
                     not_impacted = list(range(self.population))
@@ -118,36 +117,34 @@ class OpinionSimulation(PopulationSentimentSimulation):
                 impacted.append(temp)
                 not_impacted.remove(temp)
                 already_impacted.append(temp)
-            if sum([abs(x) for x in sentiment_impact[j]]) <= 0.04 or j >= self.population * 10:
+            if sum([abs(x) for x in sentiment_impact[j]]) <= 0.04 or j >= self.population * 3:
                 if j <= self.population:
                     sentiment_impact[j] = self.generate_sentiment_impact()
                 else:
                     self.j_max += j
                     return
-            # print(len(self.population_sentiment))
-            for i in range((self.population * 2) // 5):
+            for i in range(((self.population * 2) // 5) - j):
                 self.population_sentiment[impacted[i]] += sentiment_impact[j][i]
-                sentiment_impact.append([random.uniform(
-                    -abs(self.population_sentiment[impacted[i]] / 2), abs(
-                        self.population_sentiment[impacted[i]] / 2))
-                    for k in range((self.population * 2) // 5)])
+                sentiment_impact.append(self.calc_impact(self.population_sentiment[impacted[i]], j))
 
             self.past_values += self.population_sentiment
-            # print(len(self.population_sentiment))
-            # print(len(self.past_values))
             sentiment_impact.remove(sentiment_impact[j])
 
-        # if sum([abs(i) for i in sentiment_impact]) <= 0.04:
-        #     return
-        # else:
-        #     impacted = [random.randint(0, self.population-1) for i in range(4)]
-        #     print(impacted)
-        #     for i in range(3):
-        #         self.population_sentiment[impacted[i]] =
-        #         self.population_sentiment[impacted[i]] + sentiment_impact[i]
-        #         self.generate_comment_responses_sentiment(self.population_sentiment[impacted[i]])
-        #         #self.shift_visualisation()
-        #     return
+    def calc_impact(self, sentiment: float, index: int) -> list[float]:
+        """
+        Calculates the sentiment impact based on the sentiment value
+        """
+        sentiment_impact = []
+        if sentiment == 0:
+            sentiment_impact = [random.uniform(-abs(sentiment / 2), abs(sentiment / 2))
+                                for _ in range(((self.population * 2) // 5) - index)]
+        elif sentiment < 0:
+            sentiment_impact = [random.uniform(-abs(sentiment / 2), abs(sentiment / 4))
+                                for _ in range(((self.population * 2) // 5) - index)]
+        elif sentiment > 0:
+            sentiment_impact = [random.uniform(-abs(sentiment / 4), abs(sentiment / 2))
+                                for _ in range(((self.population * 2) // 5) - index)]
+        return sentiment_impact
 
     def generate_sentiment_impact(self) -> list[float]:
         """
@@ -157,33 +154,24 @@ class OpinionSimulation(PopulationSentimentSimulation):
                                                            min(self.past_values)]]) / 2),
                                 abs(max([abs(x)
                                          for x in [max(self.past_values),
-                                                   min(self.past_values)]]) / 2)) for i in
+                                                   min(self.past_values)]]) / 2)) for _ in
                  range((self.population * 2) // 5)])
 
-    def run_simulation(self, comment_raised: str) -> None:
+    def run_simulation(self, comment_raised: str, analyzer: SentimentAnalyzer) -> None:
         """
         Manage the simulation and run it on the comment raised and generate the visualisation
         """
-        # print(self.population_sentiment)
-        self.compute_comment_sentiment(comment_raised)
+        self.compute_comment_sentiment(comment_raised, analyzer)
         self.generate_responses_sentiment(self.comment_sentiment)
-        # print("Done")
-        #
-        # print(len([x for x in range(1, self.population + 1)]
-        # * (len(self.past_values) // self.population)))
-        # print(len(np.array(self.past_values)))
         temps = []
         for i in range(self.j_max + 1):
             temps += [i] * self.population
-        # print(len(np.array(temps)))
-        # print((self.population_sentiment))
         dict_temp = {"Population": np.array(
             list(range(1, self.population + 1))
             * (len(self.past_values) // self.population)),
             "Sentiment": np.array(self.past_values), "j": np.array(temps)}
         df = pd.DataFrame.from_dict(dict_temp, orient="index")
         df = df.transpose()
-        # print(df)
         population = df['Population']
         sentiment = df['Sentiment']
         iteration = df['j']
@@ -191,21 +179,14 @@ class OpinionSimulation(PopulationSentimentSimulation):
                      animation_group=population, range_y=(min(self.past_values),
                                                           max(self.past_values)))
 
-        name = 'simulation' + str(id(self))  # input("Filename to save as: ")
+        name = input("Filename to save as: ")
 
         plotly.offline.plot(fig, filename=name + '.html')
-        # fig.show(renderer="browser")
-
-        # my_raceplot = barplot(df, item_column='Population',
-        # value_column='Sentiments', time_column='j')
-        # my_raceplot.plot(item_label='Population',
-        # value_label='Sentiment', frame_duration=(self.j_max))
 
 
 class SimulationManager:
     """
     This abstract class represents a single simulation manager for multiple instances
-
     Instance Attributes:
         - instances: Stores the instances of the simulations
         - comments: Stores the lists of comments for each simulation instance
@@ -239,7 +220,6 @@ class OpinionSimulationManager(SimulationManager):
     """
     This class represents a single simulation manager for multiple instances of Opinion Effect
     Simulation
-
     Instance Attributes:
         - instances: Stores the instances of the simulations
         - comments: Stores the lists of comments for each simulation instance
@@ -289,7 +269,6 @@ class OpinionSimulationManager(SimulationManager):
                 print(j)
                 self.instances[i].run_simulation(self.comments[i][j])
             self.results.append(self.instances[i].population_sentiment)
-        # pprint.pprint(self.results)
 
 
 if __name__ == '__main__':
@@ -305,9 +284,9 @@ if __name__ == '__main__':
 
     python_ta.check_all(config={
         'extra-imports': ["doctest", "python_ta", "random", "plotly",
-                          "plotly.express", "pandas", "numpy"],
+                          "plotly.express", "pandas", "numpy", "sentiment_analysis_naive_bayes"],
         # the names (strs) of imported modules
-        'allowed-io': ["add_comments", "run_simulation"],
+        'allowed-io': ["add_comments", "run_simulation", "compute_comment_sentiment"],
         # the names (strs) of functions that call print/open/input
         'max-line-length': 100,
         'disable': ['R1705', 'C0200']
