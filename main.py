@@ -68,7 +68,7 @@ if __name__ == '__main__':
 
     # Parameters
     analyzer_source_model = 'datasets/exports.json'
-    simulation_seed_comment = 'I really like fortnite.'
+    simulation_seed_comment = 'I really like computer science.'
 
     # Some of the CSV files include sentiment data 3 days before the sentiment model was pushed.
     # I'm just going to assume the sentiment data in the pandas model is faulty.
@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
     load_and_graph(sentiment_analyzer,
                    'datasets/post-covid-us.csv',
-                   'Comment Sentiment Over Time (Post Covid US)',
+                   'Comment Sentiment Over Time (Covid US)',
                    ('created_utc', 'body'),
                    (datetime.datetime(2021, 2, 28), datetime.datetime.now()))
 
