@@ -30,13 +30,19 @@ class PopulationSentimentSimulation:
 
     def compute_comment_sentiment(self, comment: str) -> None:
         """
-        Utilises the Logistic Regression model to compute the sentiment of the comment
+        Utilises the Sentiment Analysis model to compute the sentiment of the comment
         """
         raise NotImplementedError
 
     def generate_responses_sentiment(self, sentiment: float) -> None:
         """
         Simulate the impact of the comment sentiment on the sentiment of the public
+        """
+        raise NotImplementedError
+
+    def calc_impact(self, sentiment, index):
+        """
+        Calculates the sentiment impact based on the sentiment value
         """
         raise NotImplementedError
 
@@ -85,31 +91,30 @@ class OpinionSimulation(PopulationSentimentSimulation):
 
     def compute_comment_sentiment(self, comment: str) -> None:
         """
-        Utilises the Logistic Regression model to compute the sentiment of the comment
+        Utilises the Sentiment Analysis model to compute the sentiment of the comment
         """
         self.comment = comment
         sentiment_analyzer = SentimentAnalyzer(pretrained=True)
         probability_positive = sentiment_analyzer.classify(self.comment)[2]["0"][0] - 0.5
-        self.comment_sentiment = probability_positive * 100
+        self.comment_sentiment = probability_positive * -100
+        print(self.comment_sentiment)
 
     def generate_responses_sentiment(self, sentiment: float) -> None:
         """
         Simulate the impact of the comment sentiment on the sentiment of the public
         """
-        # print(sentiment)
-        sentiment_impact = [[random.uniform(-abs(sentiment / 2), abs(sentiment / 2)) for a in range(
-            (self.population * 2) // 5)]]
+        sentiment_impact = []
+        sentiment_impact.append(self.calc_impact(sentiment, 0))
         already_impacted = []
         not_impacted = list(range(self.population))
 
         for sentiments in sentiment_impact:
             j = sentiment_impact.index(sentiments)
-            # print(j)
             impacted = []
             if not_impacted == []:
                 already_impacted = []
                 not_impacted = list(range(self.population))
-            for i in range((self.population * 2) // 5):
+            for i in range(((self.population * 2) // 5) - j):
                 if not_impacted == []:
                     already_impacted = []
                     not_impacted = list(range(self.population))
@@ -117,36 +122,34 @@ class OpinionSimulation(PopulationSentimentSimulation):
                 impacted.append(temp)
                 not_impacted.remove(temp)
                 already_impacted.append(temp)
-            if sum([abs(x) for x in sentiment_impact[j]]) <= 0.04 or j >= self.population * 10:
+            if sum([abs(x) for x in sentiment_impact[j]]) <= 0.04 or j >= self.population * 3:
                 if j <= self.population:
                     sentiment_impact[j] = self.generate_sentiment_impact()
                 else:
                     self.j_max += j
                     return
-            # print(len(self.population_sentiment))
-            for i in range((self.population * 2) // 5):
+            for i in range(((self.population * 2) // 5) - j):
                 self.population_sentiment[impacted[i]] += sentiment_impact[j][i]
-                sentiment_impact.append([random.uniform(
-                    -abs(self.population_sentiment[impacted[i]] / 2), abs(
-                        self.population_sentiment[impacted[i]] / 2))
-                    for k in range((self.population * 2) // 5)])
+                sentiment_impact.append(self.calc_impact(self.population_sentiment[impacted[i]], j))
 
             self.past_values += self.population_sentiment
-            # print(len(self.population_sentiment))
-            # print(len(self.past_values))
             sentiment_impact.remove(sentiment_impact[j])
 
-        # if sum([abs(i) for i in sentiment_impact]) <= 0.04:
-        #     return
-        # else:
-        #     impacted = [random.randint(0, self.population-1) for i in range(4)]
-        #     print(impacted)
-        #     for i in range(3):
-        #         self.population_sentiment[impacted[i]] =
-        #         self.population_sentiment[impacted[i]] + sentiment_impact[i]
-        #         self.generate_comment_responses_sentiment(self.population_sentiment[impacted[i]])
-        #         #self.shift_visualisation()
-        #     return
+    def calc_impact(self, sentiment, index):
+        """
+        Calculates the sentiment impact based on the sentiment value
+        """
+        sentiment_impact = []
+        if sentiment == 0:
+            sentiment_impact = [random.uniform(-abs(sentiment / 2), abs(sentiment / 2))
+                                 for a in range(((self.population * 2) // 5) - index)]
+        elif sentiment < 0:
+            sentiment_impact = [random.uniform(-abs(sentiment / 2), abs(sentiment / 4))
+                                 for a in range(((self.population * 2) // 5) - index)]
+        elif sentiment > 0:
+            sentiment_impact = [random.uniform(-abs(sentiment / 4), abs(sentiment / 2))
+                                 for a in range(((self.population * 2) // 5) - index)]
+        return sentiment_impact
 
     def generate_sentiment_impact(self) -> list[float]:
         """
@@ -163,26 +166,17 @@ class OpinionSimulation(PopulationSentimentSimulation):
         """
         Manage the simulation and run it on the comment raised and generate the visualisation
         """
-        # print(self.population_sentiment)
         self.compute_comment_sentiment(comment_raised)
         self.generate_responses_sentiment(self.comment_sentiment)
-        # print("Done")
-        #
-        # print(len([x for x in range(1, self.population + 1)]
-        # * (len(self.past_values) // self.population)))
-        # print(len(np.array(self.past_values)))
         temps = []
         for i in range(self.j_max + 1):
             temps += [i] * self.population
-        # print(len(np.array(temps)))
-        # print((self.population_sentiment))
         dict_temp = {"Population": np.array(
             list(range(1, self.population + 1))
             * (len(self.past_values) // self.population)),
             "Sentiment": np.array(self.past_values), "j": np.array(temps)}
         df = pd.DataFrame.from_dict(dict_temp, orient="index")
         df = df.transpose()
-        # print(df)
         population = df['Population']
         sentiment = df['Sentiment']
         iteration = df['j']
@@ -193,12 +187,6 @@ class OpinionSimulation(PopulationSentimentSimulation):
         name = input("Filename to save as: ")
 
         plotly.offline.plot(fig, filename=name + '.html')
-        # fig.show(renderer="browser")
-
-        # my_raceplot = barplot(df, item_column='Population',
-        # value_column='Sentiments', time_column='j')
-        # my_raceplot.plot(item_label='Population',
-        # value_label='Sentiment', frame_duration=(self.j_max))
 
 
 class SimulationManager:
@@ -288,7 +276,6 @@ class OpinionSimulationManager(SimulationManager):
                 print(j)
                 self.instances[i].run_simulation(self.comments[i][j])
             self.results.append(self.instances[i].population_sentiment)
-        # pprint.pprint(self.results)
 
 
 if __name__ == '__main__':
