@@ -18,19 +18,20 @@ class SentimentAnalyzer:
         - vocabulary: set of all words that occur in training data
     """
     vocabulary: set[str]
-    priors: dict[str: tuple[float, float]]
+    priors: dict[str, tuple[float, float]]
     class_to_word_to_count: dict[str, dict[str, int]]
     sum_denom: dict[str, float]
 
     def __init__(self, pretrained: bool = False) -> None:
         """ Initialize a new classifier based on external training data if available """
+
+        self.vocabulary = set()
+        self.priors = {}
+        self.class_to_word_to_count = {}
+        self.sum_denom = {}
+
         if pretrained:
             self.load_pretrained("exports.json")
-        else:
-            self.vocabulary = set()
-            self.priors = {}
-            self.class_to_word_to_count = {}
-            self.sum_denom = {}
 
     def load_pretrained(self, filename: str) -> None:
         """Loads pretrained model data from exports.json
