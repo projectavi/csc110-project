@@ -148,7 +148,6 @@ def statistics_normalize(comments: list[StatisticsCommentInfo]) -> StatisticsNor
         if latest_date is None or latest_date < comment.date:
             latest_date = comment.date
 
-    # min_x, max_x = None, None
     min_y, max_y = None, None
 
     points = []
