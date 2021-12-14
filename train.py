@@ -83,7 +83,7 @@ if __name__ == '__main__':
     print("training model...")
     sentiment_analyzer.train(train_data)
     print("finished training model.")
-    sentiment_analyzer.export_trained_data('exports.json')
+    sentiment_analyzer.export_trained_data('datasets/exports.json')
     print("exported data", sentiment_analyzer.priors)
     print(sentiment_analyzer.classify("I hate this movie"))
     print("evaluating model...")
