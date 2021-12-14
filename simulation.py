@@ -179,7 +179,7 @@ class OpinionSimulation(PopulationSentimentSimulation):
                      animation_group=population, range_y=(min(self.past_values),
                                                           max(self.past_values)))
 
-        name = input("Filename to save as: ")
+        name = 'simulation' + str(id(self))  # input("Filename to save as: ")
 
         plotly.offline.plot(fig, filename=name + '.html')
 
