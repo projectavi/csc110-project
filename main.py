@@ -1,5 +1,7 @@
 """
-Entry file for CSC110-Project.
+Sentiment analysis on public opinion regarding governments is conducted.
+Further statistical analysis is conducted on scored sentiments from the model 
+and a stunning visual simulation based on sentiments is presented.
 Copyright Mishaal Kandapath, Taylor Whatley, Aviraj Newatia, and Rudraksh Monga.
 """
 import datetime
