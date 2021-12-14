@@ -1,5 +1,5 @@
 """
-Simulate the spread of sentiment amongst a population from a comment
+Simulate the spread of sentiment amongst a population from a scored comment.
 Copyright Mishaal Kandapath, Taylor Whatley, Aviraj Newatia, and Rudraksh Monga.
 """
 
