@@ -1,12 +1,12 @@
 """
-Clean datasets using Pandas.
+Clean and preprocess datasets with pandas for sentiment analysis.
 Copyright Mishaal Kandapath, Taylor Whatley, Aviraj Newatia, and Rudraksh Monga.
 """
 
 
 def remove_columns(dfs: list, cols: list[str]) -> None:
     """
-    Remove the specified columns from the given dataframes.
+    Mutate the dataframes by removing the specified columns from the given dataframes.
 
     Precondition:
       - all(df1.columns == df2.columns for df1 in dfs for df2 in dfs)
@@ -21,7 +21,7 @@ def remove_columns(dfs: list, cols: list[str]) -> None:
 
 def add_id(dfs: list) -> None:
     """
-    Add an id column to the input dataframes.
+    Mutate the dataframes by add an id column to the input dataframes.
 
     Instance Attributes:
       - dfs: a list containing all the dataframes that need to have an 'id' column inserted.
@@ -33,7 +33,7 @@ def add_id(dfs: list) -> None:
 
 def drop_null_rows(dfs: list) -> None:
     """
-    Drop all rows that are missing any values.
+    Mutate the dataframes by dropping all rows that are missing any values.
 
     Instance Attributes:
       - dfs: a list containing all the dataframes that need to have an rows with empty values
@@ -45,7 +45,7 @@ def drop_null_rows(dfs: list) -> None:
 
 def clean_dataset(dfs: list, cols: list) -> None:
     """
-    Clean the input datasets using previously defined functions.
+    Clean the input dataframes by mutating them using previously defined functions.
 
     Instance Attributes:
       - dfs: a list containing all the dataframes that need to be cleaned.
@@ -72,11 +72,11 @@ if __name__ == '__main__':
 
     import pandas as pd
 
-    dataset_filtered = pd.read_csv(
-        'https://raw.githubusercontent.com/projectavi/csc110-project/main/data/filtered_data.csv')
+    dataset_filtered = pd.read_csv("https://raw.githubusercontent.com/projectavi/csc110-project"
+                                   "/main/data/filtered_data.csv")
 
-    dataset_filtered_us = pd.read_csv(
-        'https://raw.githubusercontent.com/projectavi/csc110-project/main/data/filtered_data_us.csv')
+    dataset_filtered_us = pd.read_csv("https://raw.githubusercontent.com/projectavi/csc110-project"
+                                      "/main/data/filtered_data_us.csv")
 
     dataframes = [dataset_filtered, dataset_filtered_us]
     columns = ['Unnamed: 0', 'type', 'id', 'subreddit.id', 'subreddit.name',
@@ -84,5 +84,5 @@ if __name__ == '__main__':
 
     clean_dataset(dataframes, columns)
 
-    dataset_filtered.to_csv('dataset_filtered_pandas.csv')
-    dataset_filtered_us.to_csv('dataset_filtered_us_pandas.csv')
+    dataset_filtered.to_csv('dataset_filtered_pandas123.csv')
+    dataset_filtered_us.to_csv('dataset_filtered_us_pandas123.csv')
