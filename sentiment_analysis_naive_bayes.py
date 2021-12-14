@@ -31,7 +31,7 @@ class SentimentAnalyzer:
         self.sum_denom = {}
 
         if pretrained:
-            self.load_pretrained("exports.json")
+            self.load_pretrained("datasets/exports.json")
 
     def load_pretrained(self, filename: str) -> None:
         """Loads pretrained model data from exports.json
@@ -72,7 +72,7 @@ class SentimentAnalyzer:
             denom = sum(self.class_to_word_to_count[sentiment].values()) + len(self.vocabulary)
             self.sum_denom[sentiment] = denom
 
-    def export_trained_data(self, filename: str = "exports.json") -> None:
+    def export_trained_data(self, filename: str = "datasets/exports.json") -> None:
         """
         Exports the trained model data to a json file
         Precoditions:
