@@ -14,10 +14,6 @@ class SentimentAnalyzer:
         - vocabulary: set of all words that occur in training data
     """
 
-    priors: dict[str, tuple[float, float]]
-    class_to_word_to_count: dict[str, dict[str, int]]
-    vocabulary: set[str]
-
     def __init__(self, pretrained=False):
         """ Initialize a new classifier based on external training data if available """
         if pretrained:
@@ -26,6 +22,7 @@ class SentimentAnalyzer:
             self.vocabulary = set()
             self.priors = {}
             self.class_to_word_to_count = {}
+            self.sum_denom = 0
     
     def load_pretrained(self, filename):
         """Loads pretrained model data from exports.json
@@ -38,33 +35,28 @@ class SentimentAnalyzer:
             self.priors = json_data["priors"]
             self.class_to_word_to_count = json_data["class_word_weights"]
             self.vocabulary = json_data["vocabulary"]
+            self.sum_denom = json_data["sum_denom"]
 
-    def create_vocabulary(self, reviews: list[str]):
-        """Creates vocabulary from all reviews in training set
-        
-        >>> reviews = ["I love this movie", "I hate this movie"]
-        >>> create_vocabulary(reviews)
-        >>> self.vocabulary == {"I", "love", "this", "movie", "hate", "this", "movie"}
-        True
-        """
-        for review in reviews:
-            for word in review.split():
+    def create_vocabulary(self, sentences):
+        """Creates vocabulary from all setences in training set"""
+        for sentence in sentences:
+            for word in sentence.split():
                 self.vocabulary.add(word)
     
-    def count_words_in_class(self, sentiment_class: str, reviews: list[str]) -> dict[str, int]:
-        """Counts the number of times each word occurs in the given reviews for given sentiment class
+    def count_words_in_class(self, sentences):
+        """Counts the number of times each word occurs in the given sentences for given sentiment class
         Preconditions:
             - sentiment_class is a valid sentiment class
-            - strings in review are stripped off whitespaces
+            - strings in sentences are stripped off whitespaces
         """
         word_counts = {}
-        for review in reviews:
-            words = review.split()
+        for sentence in sentences:
+            words = sentence.split()
             for word in words:
                 word_counts[word] = word_counts.get(word, 0) + 1
         return word_counts
 
-    def train(self, train_set_data: list[tuple[str, str]]):
+    def train(self, train_set_data):
         """
         Trains the model on the given training set. 
         """
@@ -73,9 +65,10 @@ class SentimentAnalyzer:
         for sentiment in set(classes):
             prior = classes.count(sentiment)/len(train_set_data)
             self.priors[sentiment] = (prior, math.log(prior))
-            reviews = [review[0] for review in train_set_data if review[1] == sentiment]
-            word_counts = self.count_words_in_class(sentiment, reviews)
-            self.class_to_word_to_count[sentiment] = word_counts    
+            sentences = [sentence[0] for sentence in train_set_data if sentence[1] == sentiment]
+            word_counts = self.count_words_in_class(sentences)
+            self.class_to_word_to_count[sentiment] = word_counts  
+        self.sum_denom = ((sum(self.class_to_word_to_count[sentiment].values()) + len(self.vocabulary)))  
     
     def export_trained_data(self, filename="exports.json"):
         """
@@ -87,13 +80,13 @@ class SentimentAnalyzer:
             - len(self.vocabulary) > 0
             - self should already be trained
         """
-        output_dict = {"priors": self.priors, "class_word_weights": self.class_to_word_to_count, "vocabulary": list(self.vocabulary)}
+        output_dict = {"priors": self.priors, "class_word_weights": self.class_to_word_to_count, "vocabulary": list(self.vocabulary), "sum_denom": self.sum_denom}
         with open(filename, "w") as jsonFile:
             json.dump(output_dict, jsonFile)
 
-    def classify(self, review: str) -> tuple[str, dict[str, float]]:
+    def classify(self, sentence):
         """
-        Classifies the given review based on the trained model
+        Classifies the given sentence based on the trained model
         Preconditions:
             - len(self.priors) > 0
             - len(self.class_to_word_to_count) > 0
@@ -103,7 +96,20 @@ class SentimentAnalyzer:
         result_dict = {}
         for sentiment in self.priors:
             result_dict[sentiment] = self.priors[sentiment][1]
-            for word in review.strip().split():
-                likelihood = (self.class_to_word_to_count[sentiment].get(word, 0) + 1)/(sum(self.class_to_word_to_count[sentiment].values()) + len(self.vocabulary))
-                result_dict[sentiment] += math.log(likelihood)
-        return max(result_dict, key=result_dict.get), result_dict
+            for word in sentence.strip().split():
+                likelihood = math.log((self.class_to_word_to_count[sentiment].get(word, 0) + 1)/self.sum_denom)
+                result_dict[sentiment] += (likelihood)
+
+        max_val = max(result_dict, key=result_dict.get)
+        maxi = max(result_dict.values())
+        #further computations to convert the value to a probability
+        sentiment_probs = {}
+        sentiment_sum = sum([math.exp(result_dict[sentiment] - maxi) for sentiment in result_dict])
+        for sentiment in self.priors:
+            numerator = result_dict[sentiment]
+            denominator = maxi + math.log(sentiment_sum)
+            log_prob = numerator - denominator
+            prob = math.exp(log_prob)
+            sentiment_probs[sentiment] = (prob, log_prob)
+
+        return max_val, maxi, sentiment_probs
