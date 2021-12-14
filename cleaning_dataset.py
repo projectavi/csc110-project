@@ -2,8 +2,6 @@
 Clean datasets using Pandas.
 Copyright Mishaal Kandapath, Taylor Whatley, Aviraj Newatia, and Rudraksh Monga.
 """
-# import pandas as pd
-# import numpy as np
 
 
 def remove_columns(dfs: list, cols: list[str]) -> None:
@@ -60,16 +58,31 @@ def clean_dataset(dfs: list, cols: list) -> None:
 
 if __name__ == '__main__':
     import python_ta.contracts
-    python_ta.contracts.check_all_contracts()
 
-    import doctest
-    doctest.testmod()
+    python_ta.contracts.check_all_contracts()
 
     import python_ta
 
     python_ta.check_all(config={
-        'extra-imports': [],
+        'extra-imports': ['pandas', 'numpy'],
         'allowed-io': [],
         'max-line-length': 100,
         'disable': ['R1705', 'C0200']
     })
+
+    import pandas as pd
+
+    dataset_filtered = pd.read_csv(
+        'https://raw.githubusercontent.com/projectavi/csc110-project/main/data/filtered_data.csv')
+
+    dataset_filtered_us = pd.read_csv(
+        'https://raw.githubusercontent.com/projectavi/csc110-project/main/data/filtered_data_us.csv')
+
+    dataframes = [dataset_filtered, dataset_filtered_us]
+    columns = ['Unnamed: 0', 'type', 'id', 'subreddit.id', 'subreddit.name',
+               'subreddit.nsfw', 'permalink', 'sentiment', 'score']
+
+    clean_dataset(dataframes, columns)
+
+    dataset_filtered.to_csv('dataset_filtered_pandas.csv')
+    dataset_filtered_us.to_csv('dataset_filtered_us_pandas.csv')
