@@ -5,14 +5,13 @@ Calculate and graph various statistics about reddit comments.
 import datetime
 import statistics
 
+from typing import Optional
+from dataclasses import dataclass
+
 import numpy
 import pandas
 
 import plotly.express
-
-from typing import Optional
-
-from dataclasses import dataclass
 
 
 @dataclass
@@ -27,6 +26,8 @@ class StatisticsCommentInfo:
     Instance Attributes:
         - sentiment: The sentiment of the comment from -1 (negative) through +1 (positive).
         - date: The date the comment was posted.
+
+    >>> david = StatisticsCommentInfo(0, datetime.datetime.now())
     """
 
     sentiment: float
@@ -41,6 +42,8 @@ class StatisticsPoint:
     Instance Attributes:
         - x: The x coordinate of the point.
         - y: The y coordinate of the point.
+
+    >>> StatisticsPoint(0.3, -0.2)
     """
 
     x: float
@@ -54,24 +57,25 @@ class StatisticsNormalizeResult:
     Holds range values about the data and a list of raw points. For internal use.
 
     Instance Attributes:
-        - min_x: The smallest x value in points. Usually 0.
-        - max_x: The greatest x value in points. Usually 1.
         - min_y: The smallest y value in points.
         - max_y: The greatest y value in points.
         - points: A list of pairs of x, y values. To be analyzed or graphed.
+        - line_graph: Whether or not the data should be displayed as a line graph.
         - start_date: The earliest date in the input data. For user text in graph_raw.
         - end_date: The latest date in the input data. For user text in graph_raw.
 
     Representation Invariants:
         - self.points != []
+
+    >>> StatisticsNormalizeResult(0.4, 0.8, [StatisticsPoint(0, 0.4), StatisticsPoint(1, 0.8)])
     """
-    min_x: float
-    max_x: float
 
     min_y: float
     max_y: float
 
     points: list[StatisticsPoint]
+
+    line_graph: bool = False
 
     start_date: Optional[datetime.datetime] = None
     end_date: Optional[datetime.datetime] = None
@@ -89,12 +93,13 @@ class StatisticsAnalysisResult:
         - mode_x: Mode x value (most frequently taken).
         - mean_y: Average y value.
         - median_y: Median y value.
-        - mode_y: Mode y value (most frequently taken).
         - correlation: Pearson correlation coefficient. Higher magnitude is stronger.
         - fit: 2nd degree polynomial fit. In the form fit[0] x^2 + fit[1] x + fit[2].
 
     Representation Invariants:
         - -1 <= self.correlation <= +1
+
+    >>> StatisticsAnalysisResult(0.5, 0.5, 0.5, 0.1, 0.1, 1.0, (1.0, 0.0, 2.0))
     """
 
     # We don't really care about these variables, but I will leave them here.
@@ -104,38 +109,45 @@ class StatisticsAnalysisResult:
 
     mean_y: float
     median_y: float
-    mode_y: float
 
     correlation: float
 
     fit: tuple[float, float, float]
 
 
-def statistics_normalize(comments: list[StatisticsCommentInfo],
-                         start_time: datetime.datetime,
-                         end_time: datetime.datetime) -> StatisticsNormalizeResult:
+def statistics_normalize(comments: list[StatisticsCommentInfo]) -> StatisticsNormalizeResult:
     """
     Performs initial processing on `comments`.
-    Ignores any comments that are not within the `start_time`, `end_time` range.
 
     Preconditions:
         - comments != []
+
+    >>> comments = [
+    ...     StatisticsCommentInfo(-0.4, datetime.datetime(year=2020, month=1, day=1)),
+    ...     StatisticsCommentInfo(-0.3, datetime.datetime(year=2020, month=2, day=1))
+    ... ]
+    >>> expected = StatisticsNormalizeResult(
+    ...     min_y=-0.4, max_y=-0.3,
+    ...     points=[StatisticsPoint(x=0.0, y=-0.4), StatisticsPoint(x=1.0, y=-0.3)],
+    ...     line_graph=False,
+    ...     start_date=datetime.datetime(2020, 1, 1, 0, 0),
+    ...     end_date=datetime.datetime(2020, 2, 1, 0, 0)
+    ... )
+    >>> statistics_normalize(comments) == expected
+    True
     """
 
     earliest_date = None
     latest_date = None
 
     for comment in comments:
-        if not (start_time <= comment.date <= end_time):
-            continue
-
         if earliest_date is None or earliest_date > comment.date:
             earliest_date = comment.date
 
         if latest_date is None or latest_date < comment.date:
             latest_date = comment.date
 
-    min_x, max_x = None, None
+    # min_x, max_x = None, None
     min_y, max_y = None, None
 
     points = []
@@ -143,9 +155,6 @@ def statistics_normalize(comments: list[StatisticsCommentInfo],
     magnitude = (latest_date - earliest_date).total_seconds()
 
     for comment in comments:
-        if not (start_time <= comment.date <= end_time):
-            continue
-
         start_seconds = (comment.date - earliest_date).total_seconds()
 
         # Not sure how great this is ...
@@ -153,10 +162,10 @@ def statistics_normalize(comments: list[StatisticsCommentInfo],
         x = start_seconds / magnitude
         y = comment.sentiment
 
-        if min_x is None or x < min_x:
-            min_x = x
-        if max_x is None or x > max_x:
-            max_x = x
+        # if min_x is None or x < min_x:
+        #     min_x = x
+        # if max_x is None or x > max_x:
+        #     max_x = x
 
         if min_y is None or y < min_y:
             min_y = y
@@ -166,8 +175,8 @@ def statistics_normalize(comments: list[StatisticsCommentInfo],
         points.append(StatisticsPoint(x=x, y=y))
 
     return StatisticsNormalizeResult(
-        min_x=min_x,
-        max_x=max_x,
+        # min_x=min_x,
+        # max_x=max_x,
         min_y=min_y,
         max_y=max_y,
 
@@ -178,27 +187,27 @@ def statistics_normalize(comments: list[StatisticsCommentInfo],
     )
 
 
-def statistics_normalize_all(comments: list[StatisticsCommentInfo]) -> StatisticsNormalizeResult:
-    """
-    Convenience method for statistics_normalize. Processes `comments`.
-    Does not filter any comments based on date.
-
-    Preconditions:
-        - comments != []
-    """
-    # I dont want to bother with Optional date time values so...
-    start_time = datetime.datetime(year=1, month=1, day=1)
-    end_time = datetime.datetime.now()
-
-    # A better way would be to invoke this with a method that filters it out.
-    # Too lazy...
-    return statistics_normalize(comments, start_time, end_time)
-
-
 def statistics_analyze_raw(normalized_data: StatisticsNormalizeResult) -> StatisticsAnalysisResult:
     """
     Performs analysis on the data points in `normalized_data`.
     `normalized_data` is typically a structure returned from statistics_normalize.
+
+    >>> data = StatisticsNormalizeResult(
+    ...     min_y=-0.4, max_y=-0.3,
+    ...     points=[
+    ...         StatisticsPoint(x=0.0, y=-0.4), StatisticsPoint(x=1.0, y=-0.3),
+    ...         StatisticsPoint(x=0.5, y=-0.2), StatisticsPoint(x=0.6, y=-0.1)
+    ...     ],
+    ...     line_graph=False,
+    ...     start_date=datetime.datetime(2020, 1, 1, 0, 0),
+    ...     end_date=datetime.datetime(2020, 2, 1, 0, 0)
+    ... )
+    >>> analysis = statistics_analyze_raw(data)
+    >>> import math
+    >>> math.isclose(analysis.mean_x, 0.525) and math.isclose(analysis.median_x, 0.55)
+    True
+    >>> math.isclose(analysis.mean_y, -0.25) and math.isclose(analysis.median_y, -0.25)
+    True
     """
 
     x_values = [point.x for point in normalized_data.points]
@@ -211,7 +220,7 @@ def statistics_analyze_raw(normalized_data: StatisticsNormalizeResult) -> Statis
 
     mean_y = statistics.mean(y_values)
     median_y = statistics.median(y_values)
-    mode_y = statistics.mode(y_values)
+    # mode_y = statistics.mode(y_values)
 
     data_frame = pandas.DataFrame(data=normalized_data.points)
     correlation = data_frame.corr().loc['x']['y']
@@ -226,30 +235,14 @@ def statistics_analyze_raw(normalized_data: StatisticsNormalizeResult) -> Statis
 
         mean_y=mean_y,
         median_y=median_y,
-        mode_y=mode_y,
+        # mode_y=mode_y,
 
         fit=(float(fit[0]), float(fit[1]), float(fit[2])),
         correlation=correlation
     )
 
 
-def statistics_analyze(comments: list[StatisticsCommentInfo],
-                       start_time: datetime.datetime,
-                       end_time: datetime.datetime) -> StatisticsAnalysisResult:
-    """
-    Convenience method to analyze comments in `comments` with a date posted between
-    `start_time` and `end_time`.
-
-    Returns various statistical information.
-
-    Preconditions:
-        - comments != []
-    """
-
-    return statistics_analyze_raw(statistics_normalize(comments, start_time, end_time))
-
-
-def statistics_analyze_all(comments: list[StatisticsCommentInfo]) -> StatisticsAnalysisResult:
+def statistics_analyze(comments: list[StatisticsCommentInfo]) -> StatisticsAnalysisResult:
     """
     Convenience method to analyze all comments in `comments`.
 
@@ -257,9 +250,21 @@ def statistics_analyze_all(comments: list[StatisticsCommentInfo]) -> StatisticsA
 
     Preconditions:
         - comments != []
+
+    >>> comments = [
+    ...     StatisticsCommentInfo(1.0, datetime.datetime(2011, 1, 1)),
+    ...     StatisticsCommentInfo(0.6, datetime.datetime(2011, 1, 2)),
+    ...     StatisticsCommentInfo(0.0, datetime.datetime(2011, 1, 1)),
+    ...     StatisticsCommentInfo(1.0, datetime.datetime(2011, 1, 3)),
+    ... ]
+    >>> analysis = statistics_analyze(comments)
+    >>> math.isclose(analysis.mean_x, 0.375) and math.isclose(analysis.median_x, 0.25)
+    True
+    >>> math.isclose(analysis.mean_y, 0.65) and math.isclose(analysis.median_y, 0.8)
+    True
     """
 
-    return statistics_analyze_raw(statistics_normalize_all(comments))
+    return statistics_analyze_raw(statistics_normalize(comments))
 
 
 def graph_raw(points: StatisticsNormalizeResult, title: Optional[str] = None) -> None:
@@ -268,11 +273,13 @@ def graph_raw(points: StatisticsNormalizeResult, title: Optional[str] = None) ->
     `points` is typically a structure returned from statistics_normalize.
 
     The graph title will be `title` if specified, otherwise it will be generated in method.
+
+    This function is not pure.
     """
     analysis = statistics_analyze_raw(points)
 
     if title is None:
-        title = f'Comment Sentiment Over Time'
+        title = 'Comment Sentiment Over Time'
 
     if points.start_date is not None and points.end_date is not None:
         correlation = '[r = {:.3f}]'.format(analysis.correlation)
@@ -292,11 +299,18 @@ def graph_raw(points: StatisticsNormalizeResult, title: Optional[str] = None) ->
         fit_x.append(x)
         fit_y.append(y)
 
-    figure = plotly.express.line(
-        title=title,
-        x=[point.x for point in points.points],
-        y=[point.y for point in points.points]
-    )
+    if points.line_graph:
+        figure = plotly.express.line(
+            title=title,
+            x=[point.x for point in points.points],
+            y=[point.y for point in points.points]
+        )
+    else:
+        figure = plotly.express.scatter(
+            title=title,
+            x=[point.x for point in points.points],
+            y=[point.y for point in points.points]
+        )
 
     fit_name = "{:.1f}x^2 + {:.1f}x + {:.1f}"\
         .format(analysis.fit[0], analysis.fit[1], analysis.fit[2])
@@ -306,40 +320,68 @@ def graph_raw(points: StatisticsNormalizeResult, title: Optional[str] = None) ->
     figure.show()
 
 
-def graph(comments: list[StatisticsCommentInfo],
-          start_time: datetime.datetime,
-          end_time: datetime.datetime,
-          title: Optional[str] = None) -> None:
+def graph(comments: list[StatisticsCommentInfo], title: Optional[str] = None) -> None:
     """
     Convenience method for graph.
     Opens a new window with a graph graphing all comments in `comments`.
-    Comments that do not fall in the start_time, end_time range will not be graphed.
+
+    This function is not pure.
 
     Representation Invariants:
         - comments != []
     """
 
-    return graph_raw(statistics_normalize(comments, start_time, end_time), title)
+    return graph_raw(statistics_normalize(comments), title)
 
 
-def graph_all(comments: list[StatisticsCommentInfo], title: Optional[str] = None) -> None:
+def filter_comments(comments: list[StatisticsCommentInfo],
+                    start_time: datetime.datetime,
+                    end_time: datetime.datetime) -> list[StatisticsCommentInfo]:
     """
-    Convenience method for graph.
-    Opens a new window with a graph graphing all comments in `comments`.
+    Returns a new list from `comments` containing all comments
+    that occur between `start_time` and `end_time` inclusive.
 
-    Representation Invariants:
+    >>> comments = [
+    ...     StatisticsCommentInfo(1.0, datetime.datetime(2011, 1, 1)),
+    ...     StatisticsCommentInfo(0.6, datetime.datetime(2011, 1, 2)),
+    ...     StatisticsCommentInfo(0.0, datetime.datetime(2011, 1, 1))
+    ... ]
+    >>> expected = [
+    ...     StatisticsCommentInfo(0.6, datetime.datetime(2011, 1, 2))
+    ... ]
+    >>> filter_comments(comments, datetime.datetime(2011, 1, 2), datetime.datetime(2011, 1, 2)) == expected
+    True
+    """
+
+    return [
+        comment
+        for comment in comments
+        if start_time <= comment.date <= end_time
+    ]
+
+
+def process_average_comments(comments: list[StatisticsCommentInfo]) -> StatisticsNormalizeResult:
+    """
+    Takes a list of `comments` and returns a StatisticsNormalizeResult
+    containing one data point for each day, where the y value is the
+    average sentiment of all comments on that day.
+
+    Preconditions:
         - comments != []
+
+    >>> comments = [
+    ...     StatisticsCommentInfo(1.0, datetime.datetime(2011, 1, 1)),
+    ...     StatisticsCommentInfo(0.6, datetime.datetime(2011, 1, 2)),
+    ...     StatisticsCommentInfo(0.0, datetime.datetime(2011, 1, 1))
+    ... ]
+    >>> normalized = process_average_comments(comments)
+    >>> normalized.points[0] == StatisticsPoint(0.0, 0.5)
+    True
+    >>> normalized.points[1] == StatisticsPoint(1.0, 0.6)
+    True
     """
 
-    return graph_raw(statistics_normalize_all(comments), title)
-
-
-def process_average_comments(comments: list[StatisticsCommentInfo]) -> list[StatisticsCommentInfo]:
-    """
-    AA
-    """
-
-    normalized = statistics_normalize_all(comments)
+    normalized = statistics_normalize(comments)
 
     assert normalized.start_date is not None
     assert normalized.end_date is not None
@@ -373,48 +415,26 @@ def process_average_comments(comments: list[StatisticsCommentInfo]) -> list[Stat
 
         result.append(StatisticsCommentInfo(date=day, sentiment=sentiment))
 
-    return result
+    normalized = statistics_normalize(result)
+    normalized.line_graph = True  # since x values are unique...
+
+    return normalized
+
 
 if __name__ == '__main__':
-    data = [
-        StatisticsCommentInfo(sentiment=-0.4, date=datetime.datetime(year=2020, month=1, day=1)),
-        StatisticsCommentInfo(sentiment=-0.3, date=datetime.datetime(year=2020, month=2, day=1)),
-        StatisticsCommentInfo(sentiment=-0.2, date=datetime.datetime(year=2020, month=3, day=1)),
-        StatisticsCommentInfo(sentiment=-0.1, date=datetime.datetime(year=2020, month=4, day=1)),
-        StatisticsCommentInfo(sentiment=-0.0, date=datetime.datetime(year=2020, month=5, day=1)),
-        StatisticsCommentInfo(sentiment=+0.1, date=datetime.datetime(year=2020, month=6, day=1)),
-        StatisticsCommentInfo(sentiment=+0.2, date=datetime.datetime(year=2020, month=7, day=1)),
-        StatisticsCommentInfo(sentiment=+0.3, date=datetime.datetime(year=2020, month=8, day=1)),
-        StatisticsCommentInfo(sentiment=+0.4, date=datetime.datetime(year=2021, month=10, day=1)),
-        StatisticsCommentInfo(sentiment=+0.5, date=datetime.datetime(year=2021, month=9, day=1)),
-        StatisticsCommentInfo(sentiment=+0.6, date=datetime.datetime(year=2021, month=8, day=1)),
-        StatisticsCommentInfo(sentiment=+0.7, date=datetime.datetime(year=2021, month=7, day=1)),
-        StatisticsCommentInfo(sentiment=+0.8, date=datetime.datetime(year=2021, month=6, day=1)),
-        StatisticsCommentInfo(sentiment=+0.89, date=datetime.datetime(year=2021, month=5, day=1)),
-        StatisticsCommentInfo(sentiment=+0.9, date=datetime.datetime(year=2021, month=4, day=1)),
-        StatisticsCommentInfo(sentiment=+1.0, date=datetime.datetime(year=2021, month=3, day=1)),
-    ]
+    import python_ta.contracts
+    python_ta.contracts.check_all_contracts()
 
-    print("====== ALL COMMENTS ======")
-    print(statistics_analyze_all(data))
+    import doctest
+    doctest.testmod()
 
-    print("====== BEFORE COVID ======")
-    print(statistics_analyze(data,
-                             start_time=datetime.datetime(year=2019, month=1, day=1),
-                             end_time=datetime.datetime(year=2020, month=3, day=1)))
-
-    print("====== AFTER COVID ======")
-    print(statistics_analyze(data,
-                             start_time=datetime.datetime(year=2020, month=3, day=1),
-                             end_time=datetime.datetime.now()))
-
-    print("====== DURING 2021 ======")
-    print(statistics_analyze(data,
-                             start_time=datetime.datetime(year=2021, month=1, day=1),
-                             end_time=datetime.datetime.now()))
-
-    # graph(statistics_normalize(data,
-    #                            start_time=datetime.datetime(year=2019, month=1, day=1),
-    #                            end_time=datetime.datetime(year=2020, month=3, day=1)))
-
-    graph_all(data)
+    import python_ta
+    python_ta.check_all(config={
+        'extra-imports': [
+            'numpy', 'pandas', 'plotly.express',
+            'math', 'datetime', 'statistics', 'doctest', 'python_ta'
+        ],
+        'allowed-io': [],
+        'max-line-length': 100,
+        'disable': ['R1705', 'C0200']
+    })
