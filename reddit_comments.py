@@ -5,16 +5,8 @@ Copyright Mishaal Kandapath, Taylor Whatley, Aviraj Newatia, and Rudraksh Monga.
 import datetime
 import praw
 
-reddit = praw.Reddit(
-    client_id="ZTrdortwe2H2cqKIfBVb7g",
-    client_secret="21wRV5suixf9FO1UtNMzLTvIFUxprQ",
-    password="4theproject",
-    user_agent="csc110-project by u/fakebot3",
-    username="csc110-proj",
-)
 
-
-def get_comments_pre(subreddit: str, limit: int = None) -> list[dict[str]]:
+def get_comments_pre(reddit: praw.Reddit, subreddit: str, limit: int = None) -> list[dict[str]]:
     """
     Gathers a number (limit) of the comments from the given subreddit with timestamps before
     1st January 2020
@@ -50,15 +42,20 @@ def get_comments_subreddits(subreddits: list[str], limit: int) -> list[dict[str]
     >>> len(x)
     2
     """
+
+    reddit = praw.Reddit(
+        client_id="ZTrdortwe2H2cqKIfBVb7g",
+        client_secret="21wRV5suixf9FO1UtNMzLTvIFUxprQ",
+        password="4theproject",
+        user_agent="csc110-project by u/fakebot3",
+        username="csc110-proj",
+    )
+
     comments = []
     if limit == 0:
         limit = None
     for subreddit in subreddits:
-        # ["uspolitics", "ultimateuspolitics", "american_politics", "americanpolitics"]
-        # before = len(comments)
-        comments = comments + get_comments_pre(subreddit, limit)
-        # print(subreddit + ": " + str(len(comments) - before))
-
+        comments = comments + get_comments_pre(reddit, subreddit, limit)
     return comments
 
 
