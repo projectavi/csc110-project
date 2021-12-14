@@ -309,7 +309,7 @@ def graph_raw(points: StatisticsNormalizeResult, title: Optional[str] = None) ->
 
     figure.add_scatter(x=fit_x, y=fit_y, name=fit_name)
 
-    figure.show()
+    figure.show(renderer="browser")
 
 
 def graph(comments: list[StatisticsCommentInfo], title: Optional[str] = None) -> None:
