@@ -39,7 +39,7 @@ class SentimentAnalyzer:
             - given file is a json file and exists
             - json file is formatted correctly in the format outputted in export_trained_data()
         """
-        with open(filename, "r") as json_file:
+        with open(filename: str, "r") as json_file:
             json_data = json.load(json_file)
             self.priors = json_data["priors"]
             self.class_to_word_to_count = json_data["class_word_weights"]
