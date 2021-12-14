@@ -51,6 +51,7 @@ def clean_dataset(dfs: list, cols: list) -> None:
 
     Instance Attributes:
       - dfs: a list containing all the dataframes that need to be cleaned.
+      - cols: a list of the columns that need to be removed from each dataframe.
     """
     remove_columns(dfs, cols)
     add_id(dfs)
