@@ -30,7 +30,7 @@ class PopulationSentimentSimulation:
 
     def compute_comment_sentiment(self, comment: str) -> None:
         """
-        Utilises the Logistic Regression model to compute the sentiment of the comment
+        Utilises the Sentiment Analysis model to compute the sentiment of the comment
         """
         raise NotImplementedError
 
@@ -91,7 +91,7 @@ class OpinionSimulation(PopulationSentimentSimulation):
 
     def compute_comment_sentiment(self, comment: str) -> None:
         """
-        Utilises the Logistic Regression model to compute the sentiment of the comment
+        Utilises the Sentiment Analysis model to compute the sentiment of the comment
         """
         self.comment = comment
         sentiment_analyzer = SentimentAnalyzer(pretrained=True)
