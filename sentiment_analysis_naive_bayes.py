@@ -21,7 +21,7 @@ class SentimentAnalyzer:
     def __init__(self, pretrained=False):
         """ Initialize a new classifier based on external training data if available """
         if pretrained:
-            self.load_pretrained()
+            self.load_pretrained("exports.json")
         else:
             self.vocabulary = set()
             self.priors = {}
@@ -40,7 +40,13 @@ class SentimentAnalyzer:
             self.vocabulary = json_data["vocabulary"]
 
     def create_vocabulary(self, reviews: list[str]):
-        """Creates vocabulary from all reviews in training set"""
+        """Creates vocabulary from all reviews in training set
+        
+        >>> reviews = ["I love this movie", "I hate this movie"]
+        >>> create_vocabulary(reviews)
+        >>> self.vocabulary == {"I", "love", "this", "movie", "hate", "this", "movie"}
+        True
+        """
         for review in reviews:
             for word in review.split():
                 self.vocabulary.add(word)
