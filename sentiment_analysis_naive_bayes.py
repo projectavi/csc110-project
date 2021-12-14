@@ -18,20 +18,20 @@ class SentimentAnalyzer:
         - vocabulary: set of all words that occur in training data
     """
     vocabulary: set[str]
-    priors: dict[str: tuple[float, float]]
+    priors: dict[str, tuple[float, float]]
     class_to_word_to_count: dict[str, dict[str, int]]
     sum_denom: dict[str, float]
 
     def __init__(self, pretrained: bool = False) -> None:
         """ Initialize a new classifier based on external training data if available """
-        
+
         self.vocabulary = set()
         self.priors = {}
         self.class_to_word_to_count = {}
         self.sum_denom = {}
 
         if pretrained:
-            self.load_pretrained("datasets/exports.json")
+            self.load_pretrained("exports.json")
 
     def load_pretrained(self, filename: str) -> None:
         """Loads pretrained model data from exports.json
@@ -39,7 +39,7 @@ class SentimentAnalyzer:
             - given file is a json file and exists
             - json file is formatted correctly in the format outputted in export_trained_data()
         """
-        with open(filename: str, "r") as json_file:
+        with open(filename, "r") as json_file:
             json_data = json.load(json_file)
             self.priors = json_data["priors"]
             self.class_to_word_to_count = json_data["class_word_weights"]
@@ -72,7 +72,7 @@ class SentimentAnalyzer:
             denom = sum(self.class_to_word_to_count[sentiment].values()) + len(self.vocabulary)
             self.sum_denom[sentiment] = denom
 
-    def export_trained_data(self, filename: str = "datasets/exports.json") -> None:
+    def export_trained_data(self, filename: str = "exports.json") -> None:
         """
         Exports the trained model data to a json file
         Precoditions:
