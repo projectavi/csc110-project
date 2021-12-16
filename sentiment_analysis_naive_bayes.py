@@ -41,7 +41,10 @@ class SentimentAnalyzer:
         """
         with open(filename, "r") as json_file:
             json_data = json.load(json_file)
-            self.priors = {sentiment: tuple(json_data["priors"][sentiment]) for sentiment in json_data["priors"]}
+            self.priors = {
+                sentiment: tuple(json_data["priors"][sentiment])
+                for sentiment in json_data["priors"]
+            }
             self.class_to_word_to_count = json_data["class_word_weights"]
             self.vocabulary = set(json_data["vocabulary"])
             self.sum_denom = json_data["sum_denom"]
